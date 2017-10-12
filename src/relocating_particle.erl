@@ -31,7 +31,7 @@ start_link(Ctx) ->
 
 % -spec init(list(ctx())) -> {ok, ctx()}.
 init([Ctx]) ->
-  {ok, reset(Ctx)}.
+  {ok, beat(reset(Ctx))}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call(Msg, _From, Ctx) ->
@@ -41,6 +41,8 @@ handle_call(Msg, _From, Ctx) ->
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
 
+handle_info({timeout, _, beat}, Ctx) ->
+  {noreply, beat(move(Ctx))};
 handle_info(_Msg, Ctx) ->
   {noreply, Ctx}.
 
@@ -56,17 +58,48 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %% Internal functions
 %%====================================================================
 
+move(#{position := Position, velocity := Velocity,
+       move := MoveFun, fitness := FitnessFun, env := EnvPid,
+       best := #{fitness := BestFitness, position := BestPosition}
+      }=Ctx) ->
+  % get global best position
+  GlobalBestPosition = relocating_env:get_best(EnvPid),
+  % and beacons information
+  Beacons = relocating_env:get_beacons(EnvPid),
+  % compute new position
+  NewPosition = MoveFun(
+    Position, Velocity, BestPosition, GlobalBestPosition, Ctx),
+  % compute new fitness
+  NewFitness = FitnessFun(NewPosition, Beacons),
+  % if new fitness is better,
+  case NewFitness < BestFitness orelse BestFitness =:= -1 of
+    true ->
+      % update the global best
+      relocating_env:update_best(EnvPid, NewPosition, NewFitness),
+      % and the particle best fitness/position
+      Ctx#{best => #{fitness => NewFitness, position => NewPosition}};
+    false -> Ctx
+  end.
+
+beat(#{beat_period := Period}=Ctx) ->
+  error_logger:warning_msg("Beat ~p", [self()]),
+  erlang:start_timer(Period, self(), beat),
+  Ctx.
+
 reset(Ctx) ->
   Ctx#{
     position => {0, 0, 0},
     best => #{
-      fitness => 0,
+      fitness => -1,
       position => {0, 0, 0}
     },
-    velocity => 0
+    velocity => 0,
+    % environment pid
     % fitness function
     % move function
     % inertial weight
     % cognition
     % social
+    % beat: how much time wait before update the position
+    beat_period => 1000
   }.
