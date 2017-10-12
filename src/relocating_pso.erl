@@ -31,9 +31,9 @@ move(Position, Velocity, ParticleBestPosition, GlobalBestPosition, Ctx) ->
 
   sum([Position, NewVelocity]).
 
-fitness(Position, Pods) ->
+fitness(Position, Beacons) ->
   sum([abs(sum(square(sub(Base, Position))) - (Radius * Radius))
-       || {Base, Radius} <- Pods]).
+       || {Base, Radius} <- Beacons]).
 
 %%====================================================================
 %% Internal functions
