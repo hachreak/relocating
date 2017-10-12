@@ -10,6 +10,7 @@
 -behaviour(gen_server).
 
 -export([
+  get_beacons/1,
   get_best/1,
   update_best/3
 ]).
@@ -34,6 +35,9 @@ update_best(Pid, Position, Fitness) ->
 get_best(Pid) ->
   gen_server:call(Pid, get_best).
 
+get_beacons(Pid) ->
+  gen_server:call(Pid, get_beacons).
+
 %% Callbacks gen_server
 
 % -spec start_link(ctx()) -> {ok, pid()} | ignore | {error, term()}.
@@ -45,6 +49,8 @@ init([Ctx]) ->
   {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
+handle_call(get_beacons, _From, #{beacons := Beacons}=Ctx) ->
+  {reply, Beacons, Ctx};
 handle_call(get_best, _From, #{best := #{position := Position}}=Ctx) ->
   {reply, Position, Ctx};
 handle_call(Msg, _From, Ctx) ->
@@ -84,4 +90,5 @@ reset(Ctx) ->
       fitness => -1,
       position => {0, 0, 0}
     }
+    % beacons matrix
   }.
