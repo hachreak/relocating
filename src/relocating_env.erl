@@ -10,6 +10,11 @@
 -behaviour(gen_server).
 
 -export([
+  get_best/1,
+  update_best/3
+]).
+
+-export([
   start_link/1,
   init/1,
   code_change/3,
@@ -23,6 +28,12 @@
 %% API
 %%====================================================================
 
+update_best(Pid, Position, Fitness) ->
+  gen_server:cast(Pid, {update_best, Position, Fitness}).
+
+get_best(Pid) ->
+  gen_server:call(Pid, get_best).
+
 %% Callbacks gen_server
 
 % -spec start_link(ctx()) -> {ok, pid()} | ignore | {error, term()}.
@@ -34,10 +45,21 @@ init([Ctx]) ->
   {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
+handle_call(get_best, _From, #{best := #{position := Position}}=Ctx) ->
+  {reply, Position, Ctx};
 handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
+handle_cast({update_best, {_, _, _}=Position, Fitness},
+            #{best := #{fitness := BestFitness}}=Ctx) ->
+  % update global fitness if is better
+  NewCtx = case Fitness < BestFitness orelse BestFitness =:= -1 of
+    true ->
+      Ctx#{best => #{fitness => BestFitness, position => Position}};
+    false -> Ctx
+  end,
+  {noreply, NewCtx};
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
 
@@ -59,7 +81,7 @@ code_change(_OldVsn, Ctx, _Extra) ->
 reset(Ctx) ->
   Ctx#{
     best => #{
-      fitness => 0,
+      fitness => -1,
       position => {0, 0, 0}
     }
   }.
