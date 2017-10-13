@@ -21,7 +21,7 @@ MoveFun = fun({X,Y,Z}, _, _, _, _) ->
     end
   end,
   {ok, PidPar} = relocating_particle:start_link(#{
-    position => {0,0,0},
+    position => {0,0,0}, velocity => 1,
     move => MoveFun, fitness => FitnessFun, env => PidEnv
   }),
 

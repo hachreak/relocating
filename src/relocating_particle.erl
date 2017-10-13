@@ -123,8 +123,8 @@ reset(Ctx) ->
     best => #{
       fitness => -1,
       position => {0, 0, 0}
-    },
-    velocity => 0
+    }
+    % velocity => 0
     % environment pid
     % fitness function
     % move function
