@@ -11,7 +11,7 @@ move_test() ->
   Beacons = [{{0,0,0}, 10}, {{5,5,5}, 7}],
   {ok, PidEnv} = relocating_env:start_link(#{beacons => Beacons}),
   % run particle
-  MoveFun = fun({X,Y,Z}, _, _, _, _) ->
+MoveFun = fun({X,Y,Z}, _, _, _, _) ->
     {X+1,Y,Z}
   end,
   FitnessFun = fun({X,_,_}, _) ->
@@ -47,6 +47,15 @@ move_test() ->
   ?assertEqual({3,0,0}, maps:get(position, Ctx3)),
   ?assertEqual(#{position => {3,0,0}, fitness => 7},
                maps:get(best, Ctx3)),
+  ?assertEqual({3,0,0}, relocating_env:get_best(PidEnv)),
+
+  % compute with one beat (after 1 sec)!
+  relocating_particle:beat(PidPar, 1, 1),
+  timer:sleep(1500),
+  Ctx4 = relocating_particle:debug(PidPar, ctx),
+  ?assertEqual({4,0,0}, maps:get(position, Ctx4)),
+  ?assertEqual(#{position => {3,0,0}, fitness => 7},
+               maps:get(best, Ctx4)),
   ?assertEqual({3,0,0}, relocating_env:get_best(PidEnv)),
 
   ok.

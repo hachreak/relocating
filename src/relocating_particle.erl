@@ -10,6 +10,7 @@
 -behaviour(gen_server).
 
 -export([
+  beat/3,
   debug/2,
   move/1
 ]).
@@ -32,6 +33,8 @@ move(Pid) -> gen_server:cast(Pid, move).
 
 debug(Pid, Cmd) -> gen_server:call(Pid, {debug, Cmd}).
 
+beat(Pid, Period, Times) -> gen_server:cast(Pid, {beat, Period, Times}).
+
 %% Callbacks gen_server
 
 % -spec start_link(ctx()) -> {ok, pid()} | ignore | {error, term()}.
@@ -40,7 +43,7 @@ start_link(Ctx) ->
 
 % -spec init(list(ctx())) -> {ok, ctx()}.
 init([Ctx]) ->
-  {ok, beat(reset(Ctx))}.
+  {ok, compute_beat(reset(Ctx))}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
@@ -48,12 +51,14 @@ handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
+handle_cast({beat, Period, Times}, Ctx) ->
+  {noreply, compute_beat(Ctx#{beat => #{period => Period, times => Times}})};
 handle_cast(move, Ctx) -> {noreply, compute_move(Ctx)};
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
 
 handle_info({timeout, _, beat}, Ctx) ->
-  {noreply, beat(compute_move(Ctx))};
+  {noreply, compute_beat(compute_move(Ctx))};
 handle_info(_Msg, Ctx) ->
   {noreply, Ctx}.
 
@@ -93,11 +98,22 @@ compute_move(#{position := Position, velocity := Velocity,
   end,
   NewCtx#{position => NewPosition}.
 
-beat(#{beat_period := Period}=Ctx) ->
+schedule_beat(#{beat := #{period := Period}}) ->
   error_logger:warning_msg("Beat ~p", [self()]),
-  erlang:start_timer(Period, self(), beat),
+  erlang:start_timer(Period, self(), beat).
+
+compute_beat(#{beat := #{times := Times}}=Ctx) when Times < 0 ->
+  % infinite beating
+  schedule_beat(Ctx),
   Ctx;
-beat(Ctx) ->
+compute_beat(#{beat := #{times := 0}}=Ctx) ->
+  % stop beating
+  error_logger:warning_msg("Beat ~p [STOP]", [self()]),
+  Ctx;
+compute_beat(#{beat := #{times := Times}=Beat}=Ctx) ->
+  schedule_beat(Ctx),
+  Ctx#{beat => Beat#{times => Times - 1}};
+compute_beat(Ctx) ->
   % in case no period is specified, don't run periodically!
   Ctx.
 
@@ -116,5 +132,5 @@ reset(Ctx) ->
     % cognition
     % social
     % beat: how much time wait before update the position
-    % beat_period => 1000
+    %   period => 1000, times => -1
   }.
