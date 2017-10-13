@@ -62,7 +62,7 @@ handle_cast({update_best, {_, _, _}=Position, Fitness},
   % update global fitness if is better
   NewCtx = case Fitness < BestFitness orelse BestFitness =:= -1 of
     true ->
-      Ctx#{best => #{fitness => BestFitness, position => Position}};
+      Ctx#{best => #{fitness => Fitness, position => Position}};
     false -> Ctx
   end,
   {noreply, NewCtx};
