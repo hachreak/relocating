@@ -10,6 +10,7 @@
 -behaviour(gen_server).
 
 -export([
+  around_beacons/2,
   get_beacons/1,
   get_best/1,
   update_best/3
@@ -25,6 +26,8 @@
   terminate/2
 ]).
 
+-import(relocating_matrix, ['+'/1]).
+
 %%====================================================================
 %% API
 %%====================================================================
@@ -38,6 +41,10 @@ get_best(Pid) ->
 get_beacons(Pid) ->
   gen_server:call(Pid, get_beacons).
 
+around_beacons(Pid, Radius) ->
+  % get a random point around a random beacon
+  gen_server:call(Pid, {around_beacons, Radius}).
+
 %% Callbacks gen_server
 
 % -spec start_link(ctx()) -> {ok, pid()} | ignore | {error, term()}.
@@ -49,6 +56,9 @@ init([Ctx]) ->
   {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
+handle_call({around_beacons, Radius}, _From, #{beacons := Beacons}=Ctx) ->
+  Point = get_random_point(Radius, Beacons),
+  {reply, Point, Ctx};
 handle_call(get_beacons, _From, #{beacons := Beacons}=Ctx) ->
   {reply, Beacons, Ctx};
 handle_call(get_best, _From, #{best := #{position := Position}}=Ctx) ->
@@ -83,6 +93,16 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+choose_beacon(0, [Beacon | _]) -> Beacon;
+choose_beacon(X, Beacons) -> lists:nth(ceil(X*length(Beacons)), Beacons).
+
+expand(X, Radius) -> (X - 0.5) * Radius / 0.5.
+
+get_random_point(Radius, Beacons) ->
+  {Beacon, _} = choose_beacon(rand:uniform(), Beacons),
+  Point = {expand(rand:uniform(), Radius), expand(rand:uniform(), Radius), expand(rand:uniform(), Radius)},
+  '+'([Beacon, Point]).
 
 reset(Ctx) ->
   Ctx#{

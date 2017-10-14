@@ -32,3 +32,19 @@ get_best_test() ->
   relocating_env:update_best(
     Pid, maps:get(position, New2), maps:get(fitness, New2)),
   ?assertEqual(maps:get(position, New2), relocating_env:get_best(Pid)).
+
+around_beacons_test() ->
+  Beacons = [{{0,0,0}, 50}, {{100,100,100}, 50}, {{100,100,0}, 50}],
+  Radius = 5,
+
+  {ok, Pid} = relocating_env:start_link(#{beacons => Beacons}),
+
+  Results = lists:map(fun(_) ->
+      {X, Y, Z} = relocating_env:around_beacons(Pid, Radius),
+      lists:any(fun({{Xb, Yb, Zb}, _}) ->
+          (X =< Xb+Radius) and (X >= Xb-Radius) and
+          (Y =< Yb+Radius) and (Y >= Yb-Radius) and
+          (Z =< Zb+Radius) and (Z >= Zb-Radius)
+        end, Beacons)
+    end, lists:seq(1, 100)),
+  ?assert(lists:all(fun(Bool) -> Bool end, Results)).
