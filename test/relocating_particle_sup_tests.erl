@@ -26,7 +26,6 @@ start_child_test() ->
                 lists:seq(1, 1000)),
 
   {X, Y, Z} = relocating_env:get_best(PidEnv),
-  error_logger:error_msg("Trov: ~p~n", [{X,Y,Z}]),
   ?assert((X > 50) and (X < 60)),
   ?assert((Y > 50) and (Y < 60)),
   ?assert((Z > 50) and (Z < 60)).
