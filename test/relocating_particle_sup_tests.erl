@@ -29,3 +29,28 @@ start_child_test() ->
   ?assert((X > 50) and (X < 60)),
   ?assert((Y > 50) and (Y < 60)),
   ?assert((Z > 50) and (Z < 60)).
+
+
+start_children_test() ->
+  Beacons = [{{0,0,0}, 50}, {{100,100,100}, 50}, {{100,100,0}, 50}],
+
+  {ok, PidEnvSup} = relocating_env_sup:start_link(),
+  {ok, PidEnv} = relocating_env_sup:start_child(
+      PidEnvSup, "1", #{beacons => Beacons}),
+  {ok, PidParSup} = relocating_particle_sup:start_link(),
+
+  Velocities = lists:seq(1, 10),
+  Ctx = #{
+    move=>fun(A,B,C,D,E) -> relocating_pso:move(A,B,C,D,E) end,
+    fitness => fun(A, B) -> relocating_pso:fitness(A,B) end,
+    env=>PidEnv
+   },
+
+  Ctxs = [Ctx#{velocity => Index} || Index <- Velocities],
+
+  {ok, Pids} = relocating_particle_sup:start_children(PidParSup, Ctxs),
+
+  ?assertEqual(length(Velocities), length(Pids)),
+  ?assertEqual(
+     Velocities, [maps:get(velocity, relocating_particle:debug(Pid, ctx)) ||
+                  Pid <- Pids]).
