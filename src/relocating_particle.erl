@@ -12,7 +12,8 @@
 -export([
   beat/3,
   debug/2,
-  move/1
+  move/1,
+  update/2
 ]).
 
 -export([
@@ -28,6 +29,8 @@
 %%====================================================================
 %% API
 %%====================================================================
+
+update(Pid, NewCtx) -> gen_server:cast(Pid, {update, NewCtx}).
 
 move(Pid) -> gen_server:cast(Pid, move).
 
@@ -51,6 +54,7 @@ handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
+handle_cast({update, NewCtx}, Ctx) -> {noreply, maps:merge(Ctx, NewCtx)};
 handle_cast({beat, Period, Times}, Ctx) ->
   {noreply, compute_beat(Ctx#{beat => #{period => Period, times => Times}})};
 handle_cast(move, Ctx) -> {noreply, compute_move(Ctx)};
@@ -118,13 +122,15 @@ compute_beat(Ctx) ->
   Ctx.
 
 reset(Ctx) ->
+  Position = maps:get(position, Ctx, {0, 0, 0}),
+  Velocity = maps:get(velocity, Ctx, 3),
   Ctx#{
-    position => {0, 0, 0},
+    position => Position,
+    velocity => Velocity,
     best => #{
       fitness => -1,
       position => {0, 0, 0}
     }
-    % velocity => 0
     % environment pid
     % fitness function
     % move function
@@ -133,4 +139,4 @@ reset(Ctx) ->
     % social
     % beat: how much time wait before update the position
     %   period => 1000, times => -1
-  }.
+   }.

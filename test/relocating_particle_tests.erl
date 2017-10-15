@@ -6,12 +6,16 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-move_test() ->
-  % run env
+env() ->
   Beacons = [{{0,0,0}, 10}, {{5,5,5}, 7}],
   {ok, PidEnv} = relocating_env:start_link(#{beacons => Beacons}),
+  {PidEnv, Beacons}.
+
+move_test() ->
+  % run env
+  {PidEnv, _} = env(),
   % run particle
-MoveFun = fun({X,Y,Z}, _, _, _, _) ->
+  MoveFun = fun({X,Y,Z}, _, _, _, _) ->
     {X+1,Y,Z}
   end,
   FitnessFun = fun({X,_,_}, _) ->
@@ -59,3 +63,15 @@ MoveFun = fun({X,Y,Z}, _, _, _, _) ->
   ?assertEqual({3,0,0}, relocating_env:get_best(PidEnv)),
 
   ok.
+
+update_test() ->
+  {PidEnv, _} = env(),
+  % run particle
+  {ok, PidPar} = relocating_particle:start_link(#{
+    position => {0,0,0}, velocity => 1,
+    move => fun() -> ok end, fitness => fun() -> ok end, env => PidEnv
+  }),
+
+  ?assertEqual(1, maps:get(velocity, relocating_particle:debug(PidPar, ctx))),
+  relocating_particle:update(PidPar, #{velocity => 5}),
+  ?assertEqual(5, maps:get(velocity, relocating_particle:debug(PidPar, ctx))).
