@@ -10,7 +10,10 @@
 -behaviour(gen_server).
 
 -export([
-  around_beacons/2,
+  around_beacons/2
+]).
+
+-export([
   get_beacons/1,
   get_best/1,
   update_best/3
@@ -32,28 +35,28 @@
 %% API
 %%====================================================================
 
+%% API for particles
+
 update_best(Pid, Position, Fitness) ->
   gen_server:cast(Pid, {update_best, Position, Fitness}).
 
-get_best(Pid) ->
-  gen_server:call(Pid, get_best).
+get_best(Pid) -> gen_server:call(Pid, get_best).
 
-get_beacons(Pid) ->
-  gen_server:call(Pid, get_beacons).
+get_beacons(Pid) -> gen_server:call(Pid, get_beacons).
 
+%% API for init
+
+% @doc get a random point around a random beacon. @end
 around_beacons(Pid, Radius) ->
-  % get a random point around a random beacon
   gen_server:call(Pid, {around_beacons, Radius}).
 
 %% Callbacks gen_server
 
 % -spec start_link(ctx()) -> {ok, pid()} | ignore | {error, term()}.
-start_link(Ctx) ->
-  gen_server:start_link(?MODULE, [Ctx], []).
+start_link(Ctx) -> gen_server:start_link(?MODULE, [Ctx], []).
 
 % -spec init(list(ctx())) -> {ok, ctx()}.
-init([Ctx]) ->
-  {ok, reset(Ctx)}.
+init([Ctx]) -> {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({around_beacons, Radius}, _From, #{beacons := Beacons}=Ctx) ->
