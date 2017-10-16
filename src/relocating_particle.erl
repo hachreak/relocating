@@ -124,7 +124,9 @@ compute_beat(Ctx) ->
 reset(Ctx) ->
   Position = maps:get(position, Ctx, {0, 0, 0}),
   Velocity = maps:get(velocity, Ctx, 3),
+  Name = maps:get(name, Ctx, pid_to_list(self())),
   Ctx#{
+    name => Name,
     position => Position,
     velocity => Velocity,
     best => #{
