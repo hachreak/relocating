@@ -10,7 +10,8 @@
 -behaviour(gen_server).
 
 -export([
-  around_beacons/2
+  around_beacons/2,
+  debug/2
 ]).
 
 -export([
@@ -44,6 +45,8 @@ get_best(Pid) -> gen_server:call(Pid, get_best).
 
 get_beacons(Pid) -> gen_server:call(Pid, get_beacons).
 
+debug(Pid, Cmd) -> gen_server:call(Pid, {debug, Cmd}).
+
 %% API for init
 
 % @doc get a random point around a random beacon. @end
@@ -59,6 +62,7 @@ start_link(Ctx) -> gen_server:start_link(?MODULE, [Ctx], []).
 init([Ctx]) -> {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
+handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
 handle_call({around_beacons, Radius}, _From, #{beacons := Beacons}=Ctx) ->
   Point = get_random_point(Radius, Beacons),
   {reply, Point, Ctx};
