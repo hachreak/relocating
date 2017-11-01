@@ -10,7 +10,8 @@
 -behaviour(gen_server).
 
 -export([
-  log/1
+  log_msg/1,
+  log_msg/2
 ]).
 
 -export([
@@ -29,7 +30,9 @@
 %% API
 %%====================================================================
 
-log(Msg) -> gen_server:cast(relocating_logger, {log, Msg}).
+log_msg(Msg) -> gen_server:cast(relocating_logger, {log_msg, Msg}).
+
+log_msg(Msg, Args) -> gen_server:cast(relocating_logger, {log_msg, Msg, Args}).
 
 %% Callbacks gen_server
 
@@ -44,8 +47,11 @@ handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
-handle_cast({log, Msg}, #{source := Pid}=Ctx) ->
-  stepflow_source_message:append(Pid, [stepflow_event:new(#{}, Msg)]),
+handle_cast({log_msg, Msg}, #{source := Pid}=Ctx) ->
+  store(Pid, Msg),
+  {noreply, Ctx};
+handle_cast({log_msg, Msg, Args}, #{source := Pid}=Ctx) ->
+  store(Pid, io_lib:format(Msg, Args)),
   {noreply, Ctx};
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
@@ -64,6 +70,9 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+store(Pid, Msg) ->
+  stepflow_source_message:append(Pid, [stepflow_event:new(#{}, Msg)]).
 
 run_source(#{filename := Filename}=Ctx) ->
   [{_, {_, PidS, _}}] = stepflow_config:run("
