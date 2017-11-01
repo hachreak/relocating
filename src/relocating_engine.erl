@@ -18,6 +18,7 @@
 %%====================================================================
 
 run(Name, Beacons, Quantity, Rounds) ->
+  {ok, _} = relocating_logger:start_link(#{filename => Name}),
   MoveFun = fun(A,B,C,D,E) -> relocating_pso:move(A,B,C,D,E) end,
   FitnessFun = fun(A, B) -> relocating_pso:fitness(A,B) end,
   % run environment
@@ -40,12 +41,13 @@ log_move(Fun, Args) ->
   error_logger:info_msg("[~p] ~p", [Name, Position]),
   Ctx.
 
-log_update(Fun, [EnvPid, NewPosition, NewFitness]=Args) ->
+log_update(Fun, [EnvPid, NewPosition, _NewFitness]=Args) ->
   Ctx = Fun(Args),
-  #{best := #{position := BestPosition, fitness := BestFitness}}
+  #{best := #{position := BestPosition, fitness := _BestFitness}}
     = relocating_env:debug(EnvPid, ctx),
-  error_logger:info_msg("~p ~p ~p ~p ~p ~p~n", [
-    self(), EnvPid, NewPosition, NewFitness, BestPosition, BestFitness]),
+  relocating_logger:log_msg("~p ~p ~p ~p", [
+    erlang:monotonic_time(), self(), NewPosition, BestPosition
+  ]),
   Ctx.
 
 %%====================================================================
