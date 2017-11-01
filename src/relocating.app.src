@@ -4,8 +4,10 @@
   {registered, []},
   {mod, { relocating_app, []}},
   {applications,
-   [kernel,
-    stdlib
+   [
+    kernel,
+    stdlib,
+    stepflow
    ]},
   {env,[]},
   {modules, []},
