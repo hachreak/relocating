@@ -7,7 +7,11 @@
 
 -author('Leonardo Rossi <leonardo.rossi@studenti.unipr.it>').
 
--export([run/4]).
+-export([
+  log_move/2,
+  log_update/2,
+  run/4
+]).
 
 %%====================================================================
 %% API
@@ -30,6 +34,19 @@ run(Name, Beacons, Quantity, Rounds) ->
   % run particles
   [relocating_particle:beat(Pid, 3, Rounds) || Pid <- Pids],
   PidEnv.
+
+log_move(Fun, Args) ->
+  Ctx = #{name := Name, position := Position} = Fun(Args),
+  error_logger:info_msg("[~p] ~p", [Name, Position]),
+  Ctx.
+
+log_update(Fun, [EnvPid, NewPosition, NewFitness]=Args) ->
+  Ctx = Fun(Args),
+  #{best := #{position := BestPosition, fitness := BestFitness}}
+    = relocating_env:debug(EnvPid, ctx),
+  error_logger:info_msg("~p ~p ~p ~p ~p ~p~n", [
+    self(), EnvPid, NewPosition, NewFitness, BestPosition, BestFitness]),
+  Ctx.
 
 %%====================================================================
 %% Internal functions
