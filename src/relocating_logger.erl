@@ -51,7 +51,7 @@ handle_cast({log_msg, Msg}, #{source := Pid}=Ctx) ->
   store(Pid, Msg),
   {noreply, Ctx};
 handle_cast({log_msg, Msg, Args}, #{source := Pid}=Ctx) ->
-  store(Pid, io_lib:format(Msg, Args)),
+  store(Pid, sf:format(Msg, Args)),
   {noreply, Ctx};
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
@@ -76,9 +76,26 @@ store(Pid, Msg) ->
 
 run_source(#{filename := Filename}=Ctx) ->
   [{_, {_, PidS, _}}] = stepflow_config:run("
+    <<<
+    Formatter = fun(Events) ->
+        EventsFormatted = lists:map(fun(Event) ->
+            {Time, Name, {X,Y,Z}, {BX, BY,BZ}} = stepflow_event:body(Event),
+            NewBody = sf:format(
+              \"{{time}} {{name}} {{x}} {{y}} {{z}} {{bx}} {{by}} {{bz}}\\n\",
+              [{time, Time}, {name, Name},
+               {x, X}, {y, Y}, {z, Z}, {bx, BX}, {by, BY}, {bz, BZ}]),
+            stepflow_event:body(NewBody, Event)
+          end, Events),
+        {ok, EventsFormatted}
+      end.
+    >>>
+
+    interceptor Format = stepflow_interceptor_transform#{eval => Formatter}.
     source FromMsg = stepflow_source_message[]#{}.
     channel Memory = stepflow_channel_memory#{}.
-    sink ToFile = stepflow_sink_file[]#{filename => \"" ++ Filename ++ "\"}.
+    sink ToFile = stepflow_sink_file[Format]#{
+      filename => \"" ++ Filename ++ "\"
+    }.
 
     flow Agent: FromMsg |> Memory |> ToFile.
   "),

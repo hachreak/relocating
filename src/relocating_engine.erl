@@ -41,13 +41,12 @@ log_move(Fun, Args) ->
   error_logger:info_msg("[~p] ~p", [Name, Position]),
   Ctx.
 
-log_update(Fun, [EnvPid, NewPosition, _NewFitness]=Args) ->
+log_update(Fun, [NewPosition, _NewFitness, #{env := EnvPid}]=Args) ->
   Ctx = Fun(Args),
   #{best := #{position := BestPosition, fitness := _BestFitness}}
     = relocating_env:debug(EnvPid, ctx),
-  relocating_logger:log_msg("~p ~p ~p ~p", [
-    erlang:monotonic_time(), self(), NewPosition, BestPosition
-  ]),
+  relocating_logger:log_msg(
+    {erlang:monotonic_time(), self(), NewPosition, BestPosition}),
   Ctx.
 
 %%====================================================================

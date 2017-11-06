@@ -80,7 +80,7 @@ code_change(_OldVsn, Ctx, _Extra) ->
 
 compute_move(#{position := Position, velocity := Velocity,
        move := MoveFun, fitness := FitnessFun, env := EnvPid,
-       best := #{fitness := BestFitness, position := BestPosition}
+       best := #{position := BestPosition}
       }=Ctx) ->
   % get global best position
   GlobalBestPosition = relocating_env:get_best(EnvPid),
@@ -91,6 +91,10 @@ compute_move(#{position := Position, velocity := Velocity,
     Position, Velocity, BestPosition, GlobalBestPosition, Ctx),
   % compute new fitness
   NewFitness = FitnessFun(NewPosition, Beacons),
+  update_best(NewPosition, NewFitness, Ctx).
+
+update_best(NewPosition, NewFitness,
+            #{env := EnvPid, best := #{fitness := BestFitness}}=Ctx) ->
   % if new fitness is better,
   NewCtx = case NewFitness < BestFitness orelse BestFitness =:= -1 of
     true ->
