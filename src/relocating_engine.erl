@@ -18,7 +18,7 @@
 %%====================================================================
 
 run(Name, Beacons, Quantity, Rounds) ->
-  {ok, _} = relocating_logger:start_link(#{filename => Name}),
+  {ok, _} = relocating_logger:start_link(#{port => 1234}),
   MoveFun = fun(A,B,C,D,E) -> relocating_pso:move(A,B,C,D,E) end,
   FitnessFun = fun(A, B) -> relocating_pso:fitness(A,B) end,
   % run environment

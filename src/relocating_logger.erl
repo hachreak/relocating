@@ -25,6 +25,10 @@
 ]).
 
 % -import(relocating_matrix, ['+'/1]).
+-define(TCP_OPTIONS,
+        [binary, {packet, 2}, {active, false}, {reuseaddr, true}]).
+-define(PORT, 1234).
+
 
 %%====================================================================
 %% API
@@ -40,18 +44,26 @@ log_msg(Msg, Args) -> gen_server:cast(relocating_logger, {log_msg, Msg, Args}).
 start_link(Ctx) -> gen_server:start_link({local, ?MODULE}, ?MODULE, [Ctx], []).
 
 % -spec init(list(ctx())) -> {ok, ctx()}.
-init([Ctx]) -> {ok, run_source(Ctx)}.
+init([#{port := Port}=Ctx]) ->
+  {ok, LSocket} = gen_tcp:listen(Port, ?TCP_OPTIONS),
+  {ok, Socket} = gen_tcp:accept(LSocket),
+  {ok, Ctx#{socket => Socket}}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
+handle_call({accept, LSocket}, _From, Ctx) ->
+  {ok, Socket} = gen_tcp:accept(LSocket),
+  {reply, Ctx#{socket => Socket}};
 handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
-handle_cast({log_msg, Msg}, #{source := Pid}=Ctx) ->
-  store(Pid, Msg),
-  {noreply, Ctx};
-handle_cast({log_msg, Msg, Args}, #{source := Pid}=Ctx) ->
-  store(Pid, sf:format(Msg, Args)),
+handle_cast({log_msg, Msg}, #{socket := Socket}=Ctx) ->
+  {Time, Name, {X,Y,Z}, {BX, BY,BZ}} = Msg,
+  NewBody = sf:format(
+    "{{time}} {{name}} {{x}} {{y}} {{z}} {{bx}} {{by}} {{bz}}\n",
+    [{time, Time}, {name, Name},
+     {x, X}, {y, Y}, {z, Z}, {bx, BX}, {by, BY}, {bz, BZ}]),
+  gen_tcp:send(Socket, NewBody),
   {noreply, Ctx};
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
@@ -70,33 +82,3 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
-
-store(Pid, Msg) ->
-  stepflow_source_message:append(Pid, [stepflow_event:new(#{}, Msg)]).
-
-run_source(#{filename := Filename}=Ctx) ->
-  [{_, {_, PidS, _}}] = stepflow_config:run("
-    <<<
-    Formatter = fun(Events) ->
-        EventsFormatted = lists:map(fun(Event) ->
-            {Time, Name, {X,Y,Z}, {BX, BY,BZ}} = stepflow_event:body(Event),
-            NewBody = sf:format(
-              \"{{time}} {{name}} {{x}} {{y}} {{z}} {{bx}} {{by}} {{bz}}\\n\",
-              [{time, Time}, {name, Name},
-               {x, X}, {y, Y}, {z, Z}, {bx, BX}, {by, BY}, {bz, BZ}]),
-            stepflow_event:body(NewBody, Event)
-          end, Events),
-        {ok, EventsFormatted}
-      end.
-    >>>
-
-    interceptor Format = stepflow_interceptor_transform#{eval => Formatter}.
-    source FromMsg = stepflow_source_message[]#{}.
-    channel Memory = stepflow_channel_memory#{}.
-    sink ToFile = stepflow_sink_file[Format]#{
-      filename => \"" ++ Filename ++ "\"
-    }.
-
-    flow Agent: FromMsg |> Memory |> ToFile.
-  "),
-  Ctx#{source => PidS}.

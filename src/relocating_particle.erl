@@ -107,7 +107,7 @@ update_best(NewPosition, NewFitness,
   NewCtx#{position => NewPosition}.
 
 schedule_beat(#{beat := #{period := Period}}) ->
-  error_logger:warning_msg("Beat ~p", [self()]),
+  % error_logger:warning_msg("Beat ~p", [self()]),
   erlang:start_timer(Period, self(), beat).
 
 compute_beat(#{beat := #{times := Times}}=Ctx) when Times < 0 ->
@@ -116,7 +116,7 @@ compute_beat(#{beat := #{times := Times}}=Ctx) when Times < 0 ->
   Ctx;
 compute_beat(#{beat := #{times := 0}}=Ctx) ->
   % stop beating
-  error_logger:warning_msg("Beat ~p [STOP]", [self()]),
+  % error_logger:warning_msg("Beat ~p [STOP]", [self()]),
   Ctx;
 compute_beat(#{beat := #{times := Times}=Beat}=Ctx) ->
   schedule_beat(Ctx),

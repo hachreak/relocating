@@ -108,7 +108,9 @@ expand(X, Radius) -> (X - 0.5) * Radius / 0.5.
 
 get_random_point(Radius, Beacons) ->
   {Beacon, _} = choose_beacon(rand:uniform(), Beacons),
-  Point = {expand(rand:uniform(), Radius), expand(rand:uniform(), Radius), expand(rand:uniform(), Radius)},
+  Point = {expand(rand:uniform(), Radius),
+           expand(rand:uniform(), Radius),
+           expand(rand:uniform(), Radius)},
   '+'([Beacon, Point]).
 
 reset(Ctx) ->
