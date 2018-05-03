@@ -10,12 +10,11 @@
 -behaviour(gen_server).
 
 -export([
-  around_beacons/2,
   debug/2
 ]).
 
 -export([
-  get_beacons/1,
+  ctx/2,
   get_best/1,
   update_best/3
 ]).
@@ -30,8 +29,6 @@
   terminate/2
 ]).
 
--import(relocating_matrix, ['+'/1]).
-
 %%====================================================================
 %% API
 %%====================================================================
@@ -43,15 +40,9 @@ update_best(Pid, Position, Fitness) ->
 
 get_best(Pid) -> gen_server:call(Pid, get_best).
 
-get_beacons(Pid) -> gen_server:call(Pid, get_beacons).
+ctx(Pid, Var) -> gen_server:call(Pid, {ctx, Var}).
 
 debug(Pid, Cmd) -> gen_server:call(Pid, {debug, Cmd}).
-
-%% API for init
-
-% @doc get a random point around a random beacon. @end
-around_beacons(Pid, Radius) ->
-  gen_server:call(Pid, {around_beacons, Radius}).
 
 %% Callbacks gen_server
 
@@ -63,11 +54,9 @@ init([Ctx]) -> {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
-handle_call({around_beacons, Radius}, _From, #{beacons := Beacons}=Ctx) ->
-  Point = get_random_point(Radius, Beacons),
-  {reply, Point, Ctx};
-handle_call(get_beacons, _From, #{beacons := Beacons}=Ctx) ->
-  {reply, Beacons, Ctx};
+handle_call({ctx, Var}, _, Ctx) ->
+  Value = maps:get(Var, Ctx),
+  {reply, Value, Ctx};
 handle_call(get_best, _From, #{best := #{position := Position}}=Ctx) ->
   {reply, Position, Ctx};
 handle_call(Msg, _From, Ctx) ->
@@ -100,18 +89,6 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
-
-choose_beacon(0, [Beacon | _]) -> Beacon;
-choose_beacon(X, Beacons) -> lists:nth(ceil(X*length(Beacons)), Beacons).
-
-expand(X, Radius) -> (X - 0.5) * Radius / 0.5.
-
-get_random_point(Radius, Beacons) ->
-  {Beacon, _} = choose_beacon(rand:uniform(), Beacons),
-  Point = {expand(rand:uniform(), Radius),
-           expand(rand:uniform(), Radius),
-           expand(rand:uniform(), Radius)},
-  '+'([Beacon, Point]).
 
 reset(Ctx) ->
   Ctx#{

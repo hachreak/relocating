@@ -3,7 +3,7 @@
 %% @end
 %%%-------------------------------------------------------------------
 
--module(relocating_engine).
+-module(relocating_engine_example_mlat).
 
 -author('Leonardo Rossi <leonardo.rossi@studenti.unipr.it>').
 
@@ -20,7 +20,7 @@
 run(Name, Beacons, Quantity, Rounds) ->
   {ok, _} = relocating_logger:start_link(#{port => 1234}),
   MoveFun = fun(A,B,C,D,E) -> relocating_pso:move(A,B,C,D,E) end,
-  FitnessFun = fun(A, B) -> relocating_pso:fitness(A,B) end,
+  FitnessFun = fun(A, B) -> relocating_opt_mlat:fitness(A,B) end,
   % run environment
   {ok, PidEnvSup} = relocating_env_sup:start_link(),
   {ok, PidEnv} = relocating_env_sup:start_child(
@@ -29,7 +29,7 @@ run(Name, Beacons, Quantity, Rounds) ->
   {ok, PidParSup} = relocating_particle_sup:start_link(),
   Ctxs = [#{move => MoveFun, fitness => FitnessFun, env => PidEnv,
             velocity => 2+Index,
-            position => relocating_env:around_beacons(PidEnv, 10)}
+            position => relocating_opt_mlat:around_beacons(10, Beacons)}
           || Index <- lists:seq(1, Quantity)],
   {ok, Pids} = relocating_particle_sup:start_children(PidParSup, Ctxs),
   % run particles

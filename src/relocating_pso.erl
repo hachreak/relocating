@@ -8,11 +8,10 @@
 -author('Leonardo Rossi <leonardo.rossi@studenti.unipr.it>').
 
 -export([
-  move/5,
-  fitness/2
+  move/5
 ]).
 
--import(relocating_matrix, ['.*'/2, '-'/2, '+'/1, square/1]).
+-import(relocating_matrix, ['.*'/2, '-'/2, '+'/1]).
 
 %%====================================================================
 %% API
@@ -32,7 +31,3 @@ move(Position, Velocity, ParticleBestPosition, GlobalBestPosition, Ctx) ->
   ]),
 
   '+'([Position, NewVelocity]).
-
-fitness(Position, Beacons) ->
-  '+'([abs('+'(square('-'(Base, Position))) - (Radius * Radius))
-       || {Base, Radius} <- Beacons]).

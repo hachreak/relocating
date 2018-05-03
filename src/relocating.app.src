@@ -6,8 +6,8 @@
   {applications,
    [
     kernel,
-    stdlib,
-    stepflow
+    stdlib %,
+    % stepflow
    ]},
   {env,[]},
   {modules, []},

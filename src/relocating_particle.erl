@@ -84,13 +84,11 @@ compute_move(#{position := Position, velocity := Velocity,
       }=Ctx) ->
   % get global best position
   GlobalBestPosition = relocating_env:get_best(EnvPid),
-  % and beacons information
-  Beacons = relocating_env:get_beacons(EnvPid),
   % compute new position
   NewPosition = MoveFun(
     Position, Velocity, BestPosition, GlobalBestPosition, Ctx),
   % compute new fitness
-  NewFitness = FitnessFun(NewPosition, Beacons),
+  NewFitness = FitnessFun(NewPosition, EnvPid),
   update_best(NewPosition, NewFitness, Ctx).
 
 update_best(NewPosition, NewFitness,
