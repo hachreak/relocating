@@ -40,7 +40,7 @@ update_best(Pid, Position, Fitness) ->
 
 get_best(Pid) -> gen_server:call(Pid, get_best).
 
-ctx(Pid, Var) -> gen_server:call(Pid, {ctx, Var}).
+ctx(Pid, Action) -> gen_server:call(Pid, {ctx, Action}).
 
 debug(Pid, Cmd) -> gen_server:call(Pid, {debug, Cmd}).
 
@@ -54,7 +54,9 @@ init([Ctx]) -> {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
-handle_call({ctx, Var}, _, Ctx) ->
+handle_call({ctx, {set, Var, Value}}, _, Ctx) ->
+  {reply, Value, Ctx#{Var => Value}};
+handle_call({ctx, {get, Var}}, _, Ctx) ->
   Value = maps:get(Var, Ctx),
   {reply, Value, Ctx};
 handle_call(get_best, _From, #{best := #{position := Position}}=Ctx) ->
