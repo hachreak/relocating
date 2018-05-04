@@ -17,6 +17,7 @@
   ctx/2,
   get_best/1,
   subscribe/2,
+  unsubscribe/2,
   update_best/3
 ]).
 
@@ -35,6 +36,9 @@
 %%====================================================================
 
 %% API for particles
+
+unsubscribe(Pid, ParticlePid) ->
+  gen_server:cast(Pid, {unsubscribe, ParticlePid}).
 
 subscribe(Pid, ParticlePid) ->
   gen_server:cast(Pid, {subscribe, ParticlePid}).
@@ -69,6 +73,9 @@ handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
+handle_cast({unsubscribe, ParticlePid}, #{subscribed := Sub}=Ctx) ->
+  Sub2 = sets:del_element(ParticlePid, Sub),
+  {noreply, Ctx#{subscribed => Sub2}};
 handle_cast({subscribe, ParticlePid}, #{subscribed := Sub}=Ctx) ->
   Sub2 = sets:add_element(ParticlePid, Sub),
   {noreply, Ctx#{subscribed => Sub2}};

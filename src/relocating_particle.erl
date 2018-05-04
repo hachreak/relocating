@@ -68,6 +68,10 @@ handle_info({timeout, _, beat}, Ctx) ->
 handle_info(_Msg, Ctx) ->
   {noreply, Ctx}.
 
+terminate(_Reason, #{env := PidEnv}) ->
+  relocating_env:unsubscribe(PidEnv, self()),
+  io:format("Terminate!!~n"),
+  ok;
 terminate(_Reason, _Ctx) ->
   io:format("Terminate!!~n"),
   ok.
