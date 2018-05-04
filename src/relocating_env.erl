@@ -16,6 +16,7 @@
 -export([
   ctx/2,
   get_best/1,
+  subscribe/2,
   update_best/3
 ]).
 
@@ -34,6 +35,9 @@
 %%====================================================================
 
 %% API for particles
+
+subscribe(Pid, ParticlePid) ->
+  gen_server:cast(Pid, {subscribe, ParticlePid}).
 
 update_best(Pid, Position, Fitness) ->
   gen_server:cast(Pid, {update_best, Position, Fitness}).
@@ -65,6 +69,9 @@ handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
+handle_cast({subscribe, ParticlePid}, #{subscribed := Sub}=Ctx) ->
+  Sub2 = sets:add_element(ParticlePid, Sub),
+  {noreply, Ctx#{subscribed => Sub2}};
 handle_cast({update_best, {_, _, _}=Position, Fitness},
             #{best := #{fitness := BestFitness}}=Ctx) ->
   % update global fitness if is better
@@ -97,6 +104,7 @@ reset(Ctx) ->
     best => #{
       fitness => -1,
       position => {0, 0, 0}
-    }
+    },
+    subscribed => sets:new()
     % beacons matrix
   }.

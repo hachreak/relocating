@@ -45,7 +45,8 @@ start_link(Ctx) ->
   gen_server:start_link(?MODULE, [Ctx], []).
 
 % -spec init(list(ctx())) -> {ok, ctx()}.
-init([Ctx]) ->
+init([#{env := PidEnv}=Ctx]) ->
+  relocating_env:subscribe(PidEnv, self()),
   {ok, compute_beat(reset(Ctx))}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
