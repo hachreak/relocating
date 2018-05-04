@@ -6,7 +6,7 @@ ColorHarmony colorHarmony = new ColorHarmony(this);
 Client stream;
 Map<String, Particle> particles = new HashMap<String, Particle>();
 
-//Client client; 
+//Client client;
 String inString;
 byte interesting = 10;
 
@@ -18,7 +18,7 @@ class Particle{
   Particle(String newname, PVector pos, String colparticle){
     name = newname;
     position = pos;
-    col = colorHarmony.Hex2RGB(colparticle); 
+    col = colorHarmony.Hex2RGB(colparticle);
   }
 }
 
@@ -30,8 +30,10 @@ Particle[] raw2particle(String raw){
   if(raw == null) return null;
   String[] pieces = split(raw, ' ');
   Particle[] particles = new Particle[2];
-  particles[0] = new Particle(pieces[1], new PVector(int(pieces[2]), int(pieces[3]), int(pieces[4])), "#FFFF00");
-  particles[1] = new Particle("best", new PVector(int(pieces[5]), int(pieces[6]), int(pieces[7])), "#FF0000");
+  PVector pos = new PVector(int(pieces[2]), int(pieces[3]), int(pieces[4]));
+  PVector best = new PVector(int(pieces[5]), int(pieces[6]), int(pieces[7]));
+  particles[0] = new Particle(pieces[1], pos, "#FFFF00");
+  particles[1] = new Particle("best", best, "#FF0000");
   return particles;
 }
 
@@ -44,11 +46,11 @@ void show(PVector pos, int[] col){
   stroke(col[0], col[1], col[2]);
   translate(pos.x, pos.y, pos.z);
   box(1);
-  popMatrix(); 
+  popMatrix();
 }
 
 void show_all(Map<String, Particle> particles){
- // print particles 
+ // print particles
  for(Map.Entry<String, Particle> me: particles.entrySet()){
     Particle particle = me.getValue();
     show(particle.position, particle.col);
@@ -60,19 +62,21 @@ void setup() {
   background(0);
   stroke(255);
   noSmooth();
-  frameRate(12);
+  frameRate(24);
   stream = get_stream();
 }
 
 void draw(){
-  Particle[] pars = raw2particle(next(stream));
-  if (pars != null){
-    particles.put(pars[0].name, pars[0]);
-    particles.put(pars[1].name, pars[1]);
-    background(0);
-    scale(2);
-    translate(200, 200, 0);
-    // show particle and best
-    show_all(particles);
+  while (stream.available() > 0) {
+    Particle[] pars = raw2particle(next(stream));
+    if (pars != null){
+      particles.put(pars[0].name, pars[0]);
+      particles.put(pars[1].name, pars[1]);
+    }
   }
+  background(0);
+  scale(2);
+  translate(200, 200, 0);
+  // show particle and best
+  show_all(particles);
 }
