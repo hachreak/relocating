@@ -52,7 +52,7 @@ child(PidSup, Name, Module, Ctx) ->
   FullName = pid_to_list(PidSup) ++ "_" ++ Name,
   {FullName,
    {Module, start_link, [Ctx#{name => FullName}]},
-   transient, 1000, worker, [Module]
+   temporary, 1000, worker, [Module]
   }.
 
 random_name(Namespace) ->

@@ -47,7 +47,8 @@ start_link(Ctx) ->
 % -spec init(list(ctx())) -> {ok, ctx()}.
 init([#{env := PidEnv}=Ctx]) ->
   relocating_env:subscribe(PidEnv, self()),
-  {ok, compute_beat(reset(Ctx))}.
+  {_, Ctx2} = compute_beat(reset(Ctx)),
+  {ok, Ctx2}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
@@ -57,13 +58,13 @@ handle_call(Msg, _From, Ctx) ->
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
 handle_cast({update, NewCtx}, Ctx) -> {noreply, maps:merge(Ctx, NewCtx)};
 handle_cast({beat, Period, Times}, Ctx) ->
-  {noreply, compute_beat(Ctx#{beat => #{period => Period, times => Times}})};
+  compute_beat(Ctx#{beat => #{period => Period, times => Times}});
 handle_cast(move, Ctx) -> {noreply, compute_move(Ctx)};
 handle_cast(_Msg, Ctx) ->
   {noreply, Ctx}.
 
 handle_info({timeout, _, beat}, Ctx) ->
-  {noreply, compute_beat(compute_move(Ctx))};
+  compute_beat(compute_move(Ctx)); %,
 handle_info(_Msg, Ctx) ->
   {noreply, Ctx}.
 
@@ -112,17 +113,16 @@ schedule_beat(#{beat := #{period := Period}}) ->
 compute_beat(#{beat := #{times := Times}}=Ctx) when Times < 0 ->
   % infinite beating
   schedule_beat(Ctx),
-  Ctx;
+  {noreply, Ctx};
 compute_beat(#{beat := #{times := 0}}=Ctx) ->
   % stop beating
-  % error_logger:warning_msg("Beat ~p [STOP]", [self()]),
-  Ctx;
+  {stop, normal, Ctx};
 compute_beat(#{beat := #{times := Times}=Beat}=Ctx) ->
   schedule_beat(Ctx),
-  Ctx#{beat => Beat#{times => Times - 1}};
+  {noreply, Ctx#{beat => Beat#{times => Times - 1}}};
 compute_beat(Ctx) ->
   % in case no period is specified, don't run periodically!
-  Ctx.
+  {noreply, Ctx}.
 
 reset(Ctx) ->
   Position = maps:get(position, Ctx, {0, 0, 0}),
