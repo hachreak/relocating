@@ -13,6 +13,7 @@
   beat/3,
   debug/2,
   move/1,
+  reset/1,
   update/2
 ]).
 
@@ -29,6 +30,8 @@
 %%====================================================================
 %% API
 %%====================================================================
+
+reset(Pid) -> gen_server:cast(Pid, reset).
 
 update(Pid, NewCtx) -> gen_server:cast(Pid, {update, NewCtx}).
 
@@ -47,7 +50,7 @@ start_link(Ctx) ->
 % -spec init(list(ctx())) -> {ok, ctx()}.
 init([#{env := PidEnv}=Ctx]) ->
   relocating_env:subscribe(PidEnv, self()),
-  {_, Ctx2} = compute_beat(reset(Ctx)),
+  {_, Ctx2} = compute_beat(do_reset(Ctx)),
   {ok, Ctx2}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
@@ -56,6 +59,8 @@ handle_call(Msg, _From, Ctx) ->
   {reply, Msg, Ctx}.
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
+handle_cast(reset, Ctx) ->
+  {noreply, reset_best(Ctx)};
 handle_cast({update, NewCtx}, Ctx) -> {noreply, maps:merge(Ctx, NewCtx)};
 handle_cast({beat, Period, Times}, Ctx) ->
   compute_beat(Ctx#{beat => #{period => Period, times => Times}});
@@ -128,16 +133,16 @@ compute_beat(Ctx) ->
   % in case no period is specified, don't run periodically!
   {noreply, Ctx}.
 
-reset(Ctx) ->
+do_reset(Ctx) ->
   Position = maps:get(position, Ctx, {0, 0, 0}),
   Velocity = maps:get(velocity, Ctx, 3),
   Name = maps:get(name, Ctx, pid_to_list(self())),
-  Ctx#{
+  reset_best(Ctx#{
     name => Name,
     position => Position,
     velocity => Velocity,
     best => #{
-      fitness => -1,
+      % fitness => -1,
       position => {0, 0, 0}
     }
     % environment pid
@@ -148,4 +153,8 @@ reset(Ctx) ->
     % social
     % beat: how much time wait before update the position
     %   period => 1000, times => -1
-   }.
+   }).
+
+reset_best(#{best := Best}=Ctx) ->
+  % io:format("RESET ~p~n", [self()]),
+  Ctx#{best => maps:put(fitness, -1, Best)}.

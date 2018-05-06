@@ -10,14 +10,14 @@
 -export([
   log_move/2,
   log_update/2,
-  run/4
+  run/5
 ]).
 
 %%====================================================================
 %% API
 %%====================================================================
 
-run(Name, Beacons, Quantity, Rounds) ->
+run(Name, Beacons, Quantity, Rounds, Period) ->
   {ok, _} = relocating_logger:start_link(#{port => 1234}),
   MoveFun = fun(A,B,C,D,E) -> relocating_pso:move(A,B,C,D,E) end,
   FitnessFun = fun(A, B) -> relocating_opt_mlat:fitness(A,B) end,
@@ -33,7 +33,7 @@ run(Name, Beacons, Quantity, Rounds) ->
           || Index <- lists:seq(1, Quantity)],
   {ok, Pids} = relocating_particle_sup:start_children(PidParSup, Ctxs),
   % run particles
-  [relocating_particle:beat(Pid, 3, Rounds) || Pid <- Pids],
+  [relocating_particle:beat(Pid, Period, Rounds) || Pid <- Pids],
   PidEnv.
 
 log_move(Fun, Args) ->

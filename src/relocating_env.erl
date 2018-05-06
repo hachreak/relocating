@@ -62,6 +62,9 @@ init([Ctx]) -> {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
+handle_call({ctx, {set, beacons, Value}}, _, Ctx) ->
+  Ctx2 = reset_best(Ctx),
+  {reply, Value, Ctx2#{beacons => Value}};
 handle_call({ctx, {set, Var, Value}}, _, Ctx) ->
   {reply, Value, Ctx#{Var => Value}};
 handle_call({ctx, {get, Var}}, _, Ctx) ->
@@ -107,11 +110,14 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %%====================================================================
 
 reset(Ctx) ->
-  Ctx#{
-    best => #{
-      fitness => -1,
-      position => {0, 0, 0}
-    },
+  reset_best(Ctx#{
+    best => #{position => {0, 0, 0}},
     subscribed => sets:new()
     % beacons matrix
-  }.
+  }).
+
+reset_best(#{subscribed := Sub, best := Best}=Ctx) ->
+  lists:foreach(fun(ParticlePid) ->
+      relocating_particle:reset(ParticlePid)
+    end, sets:to_list(Sub)),
+  Ctx#{best => maps:put(fitness, -1, Best)}.

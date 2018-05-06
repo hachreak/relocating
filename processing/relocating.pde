@@ -6,10 +6,6 @@ ColorHarmony colorHarmony = new ColorHarmony(this);
 Client stream;
 Map<String, Particle> particles = new HashMap<String, Particle>();
 
-//Client client;
-String inString;
-byte interesting = 10;
-
 class Particle{
   String name;
   PVector position;
@@ -38,7 +34,8 @@ Particle[] raw2particle(String raw){
 }
 
 String next(Client stream){
-  return stream.readStringUntil(interesting);
+  // read until "\n"
+  return stream.readStringUntil(10);
 }
 
 void show(PVector pos, int[] col){
