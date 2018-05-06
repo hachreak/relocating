@@ -21,8 +21,8 @@ move(Position, Velocity, ParticleBestPosition, GlobalBestPosition, Ctx) ->
   InertialWeight = maps:get(inertial_weight, Ctx, 1),
   Cognition = maps:get(cognition, Ctx, 2),
   Social = maps:get(social, Ctx, 2),
-  Rand1 = rand:uniform(),
-  Rand2 = rand:uniform(),
+  Rand1 = {rand:uniform(), rand:uniform(), rand:uniform()},
+  Rand2 = {rand:uniform(), rand:uniform(), rand:uniform()},
 
   NewVelocity = '+'([
     '.*'(InertialWeight, Velocity),
