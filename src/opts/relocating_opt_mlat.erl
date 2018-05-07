@@ -19,7 +19,7 @@
 
 
 fitness(Position, EnvPid) ->
-  Beacons = relocating_env:ctx(EnvPid, {get, beacons}),
+  [Beacons] = relocating_env:ctx(EnvPid, [{get, beacons}]),
   '+'([abs('+'(square('-'(Base, Position))) - (Radius * Radius))
        || {Base, Radius} <- Beacons]).
 

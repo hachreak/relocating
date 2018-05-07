@@ -12,7 +12,7 @@
 %% API
 -export([
   child/4,
-  start_child/3,
+  start_child/4,
   start_link/0
 ]).
 
@@ -25,8 +25,10 @@
 %% API functions
 %%====================================================================
 
-start_child(PidSup, Name, Ctx) ->
-  supervisor:start_child(PidSup, child(PidSup, Name, relocating_env, Ctx)).
+start_child(PidSup, Name, Ctx, ParticleCtx) ->
+  supervisor:start_child(
+    PidSup, child(PidSup, Name, relocating_env,
+                  relocating_env:setup(Ctx, ParticleCtx))).
 
 child(PidSup, Name, Module, Ctx) ->
   FullName = pid_to_list(PidSup) ++ "_" ++ Name,

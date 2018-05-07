@@ -16,6 +16,7 @@
 -export([
   ctx/2,
   get_best/1,
+  setup/2,
   subscribe/2,
   unsubscribe/2,
   update_best/3
@@ -35,6 +36,8 @@
 %% API
 %%====================================================================
 
+setup(Ctx, PCtx) -> Ctx#{pctx => PCtx}.
+
 %% API for particles
 
 unsubscribe(Pid, ParticlePid) ->
@@ -48,7 +51,7 @@ update_best(Pid, Position, Fitness) ->
 
 get_best(Pid) -> gen_server:call(Pid, get_best).
 
-ctx(Pid, Action) -> gen_server:call(Pid, {ctx, Action}).
+ctx(Pid, Actions) -> gen_server:call(Pid, {ctx, Actions}).
 
 debug(Pid, Cmd) -> gen_server:call(Pid, {debug, Cmd}).
 
@@ -62,14 +65,9 @@ init([Ctx]) -> {ok, reset(Ctx)}.
 
 % -spec handle_call(any(), {pid(), term()}, ctx()) -> {reply, ok, ctx()}.
 handle_call({debug, ctx}, _From, Ctx) -> {reply, Ctx, Ctx};
-handle_call({ctx, {set, beacons, Value}}, _, Ctx) ->
-  Ctx2 = reset_best(Ctx),
-  {reply, Value, Ctx2#{beacons => Value}};
-handle_call({ctx, {set, Var, Value}}, _, Ctx) ->
-  {reply, Value, Ctx#{Var => Value}};
-handle_call({ctx, {get, Var}}, _, Ctx) ->
-  Value = maps:get(Var, Ctx),
-  {reply, Value, Ctx};
+handle_call({ctx, Actions}, _From, Ctx) ->
+  Ctx2 = #{result := Result} = actions(Actions, Ctx#{result => []}),
+  {reply, Result, maps:remove(result, Ctx2)};
 handle_call(get_best, _From, #{best := #{position := Position}}=Ctx) ->
   {reply, Position, Ctx};
 handle_call(Msg, _From, Ctx) ->
@@ -109,11 +107,19 @@ code_change(_OldVsn, Ctx, _Extra) ->
 %% Internal functions
 %%====================================================================
 
+actions([], Ctx) -> Ctx;
+actions([reset | Rest], Ctx) ->
+  actions(Rest, reset_best(Ctx));
+actions([{set, Key, Value} | Rest], #{pctx := PCtx}=Ctx) ->
+  actions(Rest, Ctx#{pctx := maps:put(Key, Value, PCtx)});
+actions([{get, Key} | Rest], #{pctx := PCtx, result := Result}=Ctx) ->
+  Value = maps:get(Key, PCtx),
+  actions(Rest, Ctx#{result => [Value | Result]}).
+
 reset(Ctx) ->
   reset_best(Ctx#{
     best => #{position => {0, 0, 0}},
     subscribed => sets:new()
-    % beacons matrix
   }).
 
 reset_best(#{subscribed := Sub, best := Best}=Ctx) ->

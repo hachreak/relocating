@@ -24,7 +24,7 @@ run(Name, Beacons, Quantity, Rounds, Period) ->
   % run environment
   {ok, PidEnvSup} = relocating_env_sup:start_link(),
   {ok, PidEnv} = relocating_env_sup:start_child(
-      PidEnvSup, Name, #{beacons => Beacons}),
+      PidEnvSup, Name, #{}, #{beacons => Beacons}),
   % run particles
   {ok, PidParSup} = relocating_particle_sup:start_link(),
   Ctxs = [#{move => MoveFun, fitness => FitnessFun, env => PidEnv,
