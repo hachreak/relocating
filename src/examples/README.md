@@ -19,3 +19,7 @@ tracked:
   4> relocating_env:ctx(Pid, {set, beacons, Beacons2}).
 
 Automatically, the system is reset and start to find new best position.
+
+Or, you can read the best position found:
+
+  5> relocating_env:get_best(Pid).

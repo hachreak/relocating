@@ -19,23 +19,7 @@ The PSO algorithms are used to resolve this equations system.
 Try demo
 --------
 
-See the example `relocating_engine` and run it with:
-
-```bash
-rebar3 shell --apps relocating
-```
-
-Try the engine with 3 beacons, 6 particle and 90 rounds:
-
-
-```erlang
-1> Pid = relocating_engine:run("hello", [{{0,0,0}, 50}, {{60,60,0}, 35}, {{80,0,0}, 57}], 6, 90).
-2> relocating_env:get_best(Pid).
-{35.694006126879145,33.75898818844854,9.738399962963765}
-```
-
-The result is the best position found.
-
+See examples.
 
 Build
 -----
