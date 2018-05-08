@@ -1,12 +1,17 @@
-How to visualize tracking
-=========================
+Examples
+========
+
+Multilateration
+---------------
+
+#### How to visualize tracking
 
 Open Erlang console:
 
 ```bash
 $> rebar3 shell --apps relocating
-1> Beacons1 = [{{0,0,0}, 50}, {{60,60,0}, 35}, {{80,0,0}, 57}]
-2> Beacons2 = [{{0,0,0}, 200}, {{60,60,0},155}, {{80,0,0}, 122}].
+1> Beacons1 = [{[0,0,0], 50}, {[60,60,0], 35}, {[80,0,0], 57}].
+2> Beacons2 = [{[0,0,0], 200}, {[60,60,0],155}, {[80,0,0], 122}].
 3> Pid = relocating_engine_example_mlat:run("fuu", Beacons1, 20, -1, 20).
 ```
 
@@ -29,4 +34,18 @@ Or, you can read the best position found:
 
 ```bash
 5> relocating_env:get_best(Pid).
+```
+
+
+Sphere
+------
+
+Open Erlang console:
+
+```bash
+$> rebar3 shell --apps relocating
+1> Pid = relocating_engine_example_sphere:run(
+            "find best", 3, [20, 20, 20], 30, 90, 5).
+....
+2> relocating_env:get_best(Pid).
 ```

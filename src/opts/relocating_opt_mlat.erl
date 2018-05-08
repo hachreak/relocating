@@ -23,7 +23,7 @@
 fitness(Position, EnvPid) ->
   [Beacons] = relocating_env:ctx(EnvPid, [{get, beacons}]),
   sum([abs(sum(square('-'(Base, Position))) - (Radius * Radius))
-                  || {Base, Radius} <- Beacons]).
+       || {Base, Radius} <- Beacons]).
 
 % @doc get a random point around a random beacon. @end
 around_beacons(Radius, Beacons) ->

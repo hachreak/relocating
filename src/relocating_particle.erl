@@ -105,7 +105,7 @@ compute_move(#{position := Position, velocity := Velocity,
 update_best(NewPosition, NewFitness,
             #{env := EnvPid, best := #{fitness := BestFitness}}=Ctx) ->
   % if new fitness is better,
-  NewCtx = case NewFitness < BestFitness orelse BestFitness =:= -1 of
+  NewCtx = case BestFitness =:= reset orelse NewFitness < BestFitness of
     true ->
       % update the global best
       relocating_env:update_best(EnvPid, NewPosition, NewFitness),
@@ -158,5 +158,4 @@ do_reset(Ctx) ->
    }).
 
 reset_best(#{best := Best}=Ctx) ->
-  % io:format("RESET ~p~n", [self()]),
-  Ctx#{best => maps:put(fitness, -1, Best)}.
+  Ctx#{best => maps:put(fitness, reset, Best)}.

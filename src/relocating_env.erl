@@ -80,10 +80,10 @@ handle_cast({unsubscribe, ParticlePid}, #{subscribed := Sub}=Ctx) ->
 handle_cast({subscribe, ParticlePid}, #{subscribed := Sub}=Ctx) ->
   Sub2 = sets:add_element(ParticlePid, Sub),
   {noreply, Ctx#{subscribed => Sub2}};
-handle_cast({update_best, {_, _, _}=Position, Fitness},
+handle_cast({update_best, Position, Fitness},
             #{best := #{fitness := BestFitness}}=Ctx) ->
   % update global fitness if is better
-  NewCtx = case Fitness < BestFitness orelse BestFitness =:= -1 of
+  NewCtx = case BestFitness =:= reset orelse Fitness < BestFitness of
     true ->
       Ctx#{best => #{fitness => Fitness, position => Position}};
     false -> Ctx
@@ -127,4 +127,4 @@ reset_best(#{subscribed := Sub, best := Best}=Ctx) ->
   lists:foreach(fun(ParticlePid) ->
       relocating_particle:reset(ParticlePid)
     end, sets:to_list(Sub)),
-  Ctx#{best => maps:put(fitness, -1, Best)}.
+  Ctx#{best => maps:put(fitness, reset, Best)}.

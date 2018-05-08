@@ -12,13 +12,14 @@
 ]).
 
 -export([
-  init_position/1
+  init_position/2
 ]).
 
--import(relocating_matrix, ['+'/1]).
+-define(M, relocating_matrix).
 
-fitness({X, Y,Z}, _EnvPid) ->
-  '+'([X*X + Y*Y + Z*Z]).
+fitness(Coordinates, _EnvPid) ->
+  ?M:sum(?M:square(Coordinates)).
 
-init_position(Max) ->
-  {rand:uniform(Max), rand:uniform(Max), rand:uniform(Max)}.
+init_position(Max, Center) ->
+  Dim = length(Center),
+  ?M:'+'(?M:'.*'(Max, ?M:random_uniform(Dim)), Center).
