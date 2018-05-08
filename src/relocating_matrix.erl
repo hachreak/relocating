@@ -29,6 +29,8 @@
   lists:map(fun(Bi) -> Bi * A end, B);
 '.*'(A, B) when is_list(A) and is_number(B) ->
    '.*'(B, A);
+'.*'(A, B) when is_function(A) ->
+  lists:map(fun(Bi) -> A(Bi) end, B);
 '.*'(A, B) ->
    A*B.
 

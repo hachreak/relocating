@@ -15,7 +15,9 @@
   around_beacons/2
 ]).
 
--import(relocating_matrix, ['-'/2, sum/1, sum/2, square/1]).
+-import(relocating_matrix, [
+  '.*'/2, '-'/2, sum/1, sum/2, square/1, random_uniform/1
+]).
 
 
 fitness(Position, EnvPid) ->
@@ -26,9 +28,8 @@ fitness(Position, EnvPid) ->
 % @doc get a random point around a random beacon. @end
 around_beacons(Radius, Beacons) ->
   {Beacon, _} = choose_beacon(rand:uniform(), Beacons),
-  Point = [expand(rand:uniform(), Radius),
-           expand(rand:uniform(), Radius),
-           expand(rand:uniform(), Radius)],
+  Dim = length(Beacon),
+  Point = '.*'(expand(Radius), random_uniform(Dim)),
   sum(column, [Beacon, Point]).
 
 %% Private functions
@@ -36,4 +37,5 @@ around_beacons(Radius, Beacons) ->
 choose_beacon(0, [Beacon | _]) -> Beacon;
 choose_beacon(X, Beacons) -> lists:nth(ceil(X*length(Beacons)), Beacons).
 
-expand(X, Radius) -> (X - 0.5) * Radius / 0.5.
+expand(Radius) ->
+  fun(X) -> (X - 0.5) * Radius / 0.5 end.
