@@ -117,9 +117,10 @@ actions([{get, Key} | Rest], #{pctx := PCtx, result := Result}=Ctx) ->
   actions(Rest, Ctx#{result => [Value | Result]}).
 
 reset(Ctx) ->
+  Dim = maps:get(dimensions, Ctx, 3),
   reset_best(Ctx#{
-    best => #{position => {0, 0, 0}},
-    subscribed => sets:new()
+    best => #{position => relocating_matrix:fill(Dim, 0)},
+    subscribed => sets:new(), dimensions => Dim
   }).
 
 reset_best(#{subscribed := Sub, best := Best}=Ctx) ->

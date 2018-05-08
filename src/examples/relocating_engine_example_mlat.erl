@@ -18,17 +18,18 @@
 %%====================================================================
 
 run(Name, Beacons, Quantity, Rounds, Period) ->
+  Dim = 3,
   {ok, _} = relocating_logger:start_link(#{port => 1234}),
   MoveFun = fun(A,B,C,D,E) -> relocating_pso:move(A,B,C,D,E) end,
   FitnessFun = fun(A, B) -> relocating_opt_mlat:fitness(A,B) end,
   % run environment
   {ok, PidEnvSup} = relocating_env_sup:start_link(),
   {ok, PidEnv} = relocating_env_sup:start_child(
-      PidEnvSup, Name, #{}, #{beacons => Beacons}),
+      PidEnvSup, Name, #{dimensions => Dim}, #{beacons => Beacons}),
   % run particles
   {ok, PidParSup} = relocating_particle_sup:start_link(),
   Ctxs = [#{move => MoveFun, fitness => FitnessFun, env => PidEnv,
-            velocity => 2+Index,
+            velocity => 2+Index, dimensions => Dim,
             position => relocating_opt_mlat:around_beacons(10, Beacons)}
           || Index <- lists:seq(1, Quantity)],
   {ok, Pids} = relocating_particle_sup:start_children(PidParSup, Ctxs),

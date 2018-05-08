@@ -134,16 +134,18 @@ compute_beat(Ctx) ->
   {noreply, Ctx}.
 
 do_reset(Ctx) ->
-  Position = maps:get(position, Ctx, {0, 0, 0}),
+  Dim = maps:get(dimensions, Ctx, 3),
+  Position = maps:get(position, Ctx, relocating_matrix:fill(Dim, 0)),
   Velocity = maps:get(velocity, Ctx, 3),
   Name = maps:get(name, Ctx, pid_to_list(self())),
   reset_best(Ctx#{
     name => Name,
+    dimensions => Dim,
     position => Position,
     velocity => Velocity,
     best => #{
       % fitness => -1,
-      position => {0, 0, 0}
+      position => relocating_matrix:fill(Dim, 0)
     }
     % environment pid
     % fitness function

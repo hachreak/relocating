@@ -15,21 +15,21 @@
   around_beacons/2
 ]).
 
--import(relocating_matrix, ['-'/2, '+'/1, square/1]).
+-import(relocating_matrix, ['-'/2, sum/1, sum/2, square/1]).
 
 
 fitness(Position, EnvPid) ->
   [Beacons] = relocating_env:ctx(EnvPid, [{get, beacons}]),
-  '+'([abs('+'(square('-'(Base, Position))) - (Radius * Radius))
-       || {Base, Radius} <- Beacons]).
+  sum([abs(sum(square('-'(Base, Position))) - (Radius * Radius))
+                  || {Base, Radius} <- Beacons]).
 
 % @doc get a random point around a random beacon. @end
 around_beacons(Radius, Beacons) ->
   {Beacon, _} = choose_beacon(rand:uniform(), Beacons),
-  Point = {expand(rand:uniform(), Radius),
+  Point = [expand(rand:uniform(), Radius),
            expand(rand:uniform(), Radius),
-           expand(rand:uniform(), Radius)},
-  '+'([Beacon, Point]).
+           expand(rand:uniform(), Radius)],
+  sum(column, [Beacon, Point]).
 
 %% Private functions
 

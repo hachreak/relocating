@@ -11,23 +11,26 @@
   move/5
 ]).
 
--import(relocating_matrix, ['.*'/2, '-'/2, '+'/1]).
+-import(relocating_matrix, [
+  '.*'/2, '-'/2, fill/2, sum/2
+]).
 
 %%====================================================================
 %% API
 %%====================================================================
 
 move(Position, Velocity, ParticleBestPosition, GlobalBestPosition, Ctx) ->
+  Dim = maps:get(dimensions, Ctx),
   InertialWeight = maps:get(inertial_weight, Ctx, 1),
   Cognition = maps:get(cognition, Ctx, 2),
   Social = maps:get(social, Ctx, 2),
-  Rand1 = {rand:uniform(), rand:uniform(), rand:uniform()},
-  Rand2 = {rand:uniform(), rand:uniform(), rand:uniform()},
+  Rand1 = relocating_matrix:random_uniform(Dim),
+  Rand2 = relocating_matrix:random_uniform(Dim),
 
-  NewVelocity = '+'([
-    '.*'(InertialWeight, Velocity),
+  NewVelocity = sum(column, [
+    '.*'(fill(Dim, InertialWeight), fill(Dim, Velocity)),
     '.*'('.*'(Cognition, Rand1), '-'(ParticleBestPosition, Position)),
     '.*'('.*'(Social, Rand2), '-'(GlobalBestPosition, Position))
   ]),
 
-  '+'([Position, NewVelocity]).
+  sum(column, [Position, NewVelocity]).

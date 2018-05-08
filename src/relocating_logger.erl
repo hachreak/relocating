@@ -24,7 +24,6 @@
   terminate/2
 ]).
 
-% -import(relocating_matrix, ['+'/1]).
 -define(TCP_OPTIONS,
         [binary, {packet, 2}, {active, false}, {reuseaddr, true}]).
 -define(PORT, 1234).
@@ -58,7 +57,7 @@ handle_call(Msg, _From, Ctx) ->
 
 % -spec handle_cast({append, list(event())} | pop, ctx()) -> {noreply, ctx()}.
 handle_cast({log_msg, Msg}, #{socket := Socket}=Ctx) ->
-  {Time, Name, {X,Y,Z}, {BX, BY,BZ}} = Msg,
+  {Time, Name, [X,Y,Z], [BX, BY,BZ]} = Msg,
   NewBody = sf:format(
     "{{time}} {{name}} {{x}} {{y}} {{z}} {{bx}} {{by}} {{bz}}\n",
     [{time, Time}, {name, Name},
